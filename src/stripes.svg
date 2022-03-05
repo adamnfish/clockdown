@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+  <defs>
+    <pattern id="pattern_ADfNJ" patternUnits="userSpaceOnUse" width="15" height="15" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="15" stroke="rgba(100,100,100,1)" stroke-width="15" />
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#pattern_ADfNJ)" />
+</svg>

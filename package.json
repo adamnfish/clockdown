@@ -1,0 +1,16 @@
+{
+  "name": "clockdown",
+  "version": "1.0.0",
+  "description": "Simple game timer",
+  "scripts": {
+    "test": "elm-test",
+    "dev": "npx parcel src/index.html"
+  },
+  "author": "adamnfish",
+  "license": "ISC",
+  "devDependencies": {
+    "@parcel/transformer-elm": "^2.3.2",
+    "elm": "^0.19.1-5",
+    "parcel": "^2.3.2"
+  }
+}
