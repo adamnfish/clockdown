@@ -4,7 +4,8 @@
   "description": "Simple game timer",
   "scripts": {
     "test": "elm-test",
-    "dev": "npx parcel src/index.html"
+    "dev": "npx parcel src/index.html",
+    "build": "rm -rf docs && parcel build src/index.html --dist-dir docs --public-url ./"
   },
   "author": "adamnfish",
   "license": "ISC",
