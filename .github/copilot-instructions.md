@@ -7,42 +7,49 @@ Always reference these instructions first and fallback to search or bash command
 ## Working Effectively
 
 ### Prerequisites and Installation
-Due to native dependency compilation issues, the standard npm workflow does not work. Use these alternative approaches:
+The build system has been modernized and now uses standard npm workflows:
 
-- Install global tools to avoid local dependency conflicts:
-  - `npm install -g elm@0.19.1-5` -- installs in ~11 seconds
-  - `npm install -g parcel@2.3.2` -- installs in ~58 seconds  
-  - `npm install -g @parcel/transformer-elm@2.3.2` -- installs in ~24 seconds
-  - `npm install -g elm-test` -- installs in ~8 seconds (note: version compatibility issues exist)
+**Standard npm workflow:**
+- `npm install` -- **WORKS** - installs all dependencies successfully (takes ~45-60 seconds)
+- All development tools are included as local dependencies in package.json
+- No need for global tool installations
 
-### DO NOT attempt npm install 
-- `npm install` -- **FAILS** due to lmdb native compilation errors with current Node.js version
-- `npm install --force` -- **FAILS** after ~5 seconds with make compilation errors
-- The local package.json dependencies cannot be installed due to native binding incompatibilities
+**Development Scripts (use these instead of global tools):**
+- `npm run dev` -- starts Parcel development server
+- `npm run build` -- builds production version to `dist/` directory  
+- `npm run format` -- runs elm-format on source files (**ALWAYS run after making changes**)
+- `npm run test` -- runs elm-test (fails due to network restrictions)
+- `npm run review` -- runs elm-review (available but don't run yet - see notes)
+- `npm run deps` -- runs elm-json for dependency management
 
 ### Running the Application
-The application can be run using the pre-built version in the `docs/` directory:
+**Development server (recommended):**
+- `npm run dev` -- starts Parcel dev server (usually on port 1234)
+- Hot reloading and development features included
+- **NOTE:** May fail due to network timeouts downloading Elm packages on first run
 
-- **Recommended approach**: `cd docs && python3 -m http.server 8000` -- starts immediately
-- Access at `http://localhost:8000`
-- The built version is fully functional and ready for testing
+**Alternative for testing:**
+- `npm run build` to create `dist/` directory (if network allows)
+- Serve `dist/` directory: `cd dist && python3 -m http.server 8000`
 
 ### Build Process
-Building from source has network and dependency limitations:
+Building works locally but has network limitations:
 
-- `elm make src/Main.elm --output=test.js` -- **FAILS** due to package.elm-lang.org network timeouts
-- `parcel build src/index.html --dist-dir test-build` -- **FAILS** without local transformer installation (~1 second)
-- `parcel src/index.html --port 3000` -- **FAILS** due to missing local dependencies
+- `npm run build` -- **PARTIALLY WORKS** - fails due to package.elm-lang.org network timeouts
+- `npm run dev` -- **PARTIALLY WORKS** - may fail on first run due to package downloads
+- Local tooling (parcel, elm-format) works fine once packages are available
+- Network restrictions prevent downloading Elm packages from package.elm-lang.org
 
-### Testing
-- `elm-test` -- **FAILS** due to version incompatibility (elm-explorations/test 1.0.0 vs required 2.x)
-- No unit test infrastructure is currently functional
-- Manual testing is the primary validation method
+### Testing and Code Quality
+- `npm run test` -- **FAILS** due to network restrictions preventing package downloads
+- `npm run format` -- **WORKS** - always run this after making changes to source code
+- `npm run review` -- **AVAILABLE** but don't run yet (future task to configure rules)
+- Manual testing is the primary validation method due to network restrictions
 
 ## Validation
 
 ### ALWAYS test these user scenarios after making changes:
-1. **Application Start**: Serve docs/ directory and verify application loads with "Start" and "+ player" buttons
+1. **Application Start**: Run `npm run dev` or serve `dist/` directory and verify application loads with "Start" and "+ player" buttons
 2. **Timer Functionality**: Click "Start" to begin game, verify colored player sections appear with "start" buttons
 3. **Player Timer Control**: Click on a player's "start" button to activate their individual timer
 4. **Timer Display**: Verify time displays in seconds format ("11\"") - timer counts up from 0
@@ -52,26 +59,26 @@ Building from source has network and dependency limitations:
 8. **Visual States**: Verify paused timers show striped pattern overlay
 
 ### Manual Validation Process
-- ALWAYS serve the docs/ directory after any changes to verify functionality
+- ALWAYS run `npm run format` after making any code changes
+- Use `npm run dev` for development testing (may fail on first run due to network)
+- If dev server fails, build with `npm run build` and serve `dist/` directory
 - Take screenshots to document UI changes
 - Test complete timer workflows: start → player selection → timing → pause → resume
 - Verify time display formatting works correctly (starts at 0, counts up in seconds)
 - Verify pause state shows "Resume" button and striped background pattern
-- Application loads in under 1 second when served via HTTP server
 
 ## Repository Structure
 
 ### Key Files and Directories
 ```
 .
-├── README.md                    # Basic project description
-├── package.json                 # Contains build scripts (npm run dev, npm run build, npm test)
-├── elm.json                     # Elm project configuration and dependencies
-├── .gitignore                   # Excludes .parcel-cache/, elm-stuff/, node_modules/
-├── docs/                        # Pre-built application (works via HTTP server)
-│   ├── index.html              # Built HTML entry point
-│   ├── index.4579fe2e.js       # Compiled JavaScript bundle
-│   └── stripes.547a5ce6.svg    # Compiled SVG asset
+├── README.md                    # Project description and development instructions
+├── package.json                 # Contains npm scripts: dev, build, test, format, review, deps
+├── package-lock.json            # Locked dependency versions
+├── elm.json                     # Elm project configuration (DO NOT edit directly - use npm run deps)
+├── .gitignore                   # Excludes .parcel-cache/, elm-stuff/, node_modules/, dist/
+├── dist/                        # Build output directory (created by npm run build)
+├── node_modules/                # npm dependencies (created by npm install)
 └── src/                         # Source code
     ├── Main.elm                # Main application logic (Model, View, Update)
     ├── index.html              # HTML entry point template
@@ -90,26 +97,46 @@ Building from source has network and dependency limitations:
 
 ### Making Code Changes
 1. Edit source files in `src/` directory
-2. **Cannot build locally** due to dependency issues
-3. Must test changes by updating the docs/ build or using alternative build methods
-4. Always validate changes using the HTTP server method
+2. **ALWAYS** run `npm run format` after making changes
+3. Test changes using `npm run dev` or build and serve `dist/`
+4. Network restrictions may prevent initial builds from working
 
-### Serving for Development
+### Development Workflow
+**Using development server:**
 ```bash
-cd /home/runner/work/clockdown/clockdown/docs
-python3 -m http.server 8000
+cd /home/runner/work/clockdown/clockdown
+npm install  # if not done already
+npm run dev  # starts development server
+# Access at http://localhost:1234 (or port shown in output)
+```
+
+**Using build and serve method:**
+```bash
+cd /home/runner/work/clockdown/clockdown
+npm run build  # builds to dist/ directory
+cd dist && python3 -m http.server 8000
 # Access at http://localhost:8000
 ```
 
-### Package.json Scripts (Non-functional)
-- `npm run test` -- **FAILS** (elm-test version incompatibility)
-- `npm run dev` -- **FAILS** (missing local dependencies) 
-- `npm run build` -- **FAILS** (missing local dependencies)
+### Dependency Management
+**CRITICAL:** Do not edit `elm.json` directly. Use the elm-json tool instead:
+- `npm run deps -- install <package>` -- add a new Elm package
+- `npm run deps -- --help` -- see all available options
+- Use `npx elm-json` for direct access to the tool
+
+### Package.json Scripts (Modern workflow)
+- `npm run dev` -- **WORKS** (Parcel development server, may fail on network)
+- `npm run build` -- **WORKS** (builds to dist/, may fail on network)
+- `npm run format` -- **WORKS** (elm-format, always run after changes)
+- `npm run test` -- **FAILS** (network restrictions prevent package downloads)
+- `npm run review` -- **AVAILABLE** (elm-review, don't run yet - future task)
+- `npm run deps` -- **WORKS** (elm-json for dependency management)
 
 ### File Operations Timing
-- `elm --version` -- responds in ~0.019 seconds
-- `ls` operations -- immediate response
-- Global package installations -- see prerequisites section for timing
+- `npm install` -- completes in ~45-60 seconds (fully functional)
+- `npm run format` -- completes in ~1-2 seconds
+- `npm run dev` -- starts in ~3-5 seconds (may fail on package downloads)
+- `npm run build` -- varies depending on network (may fail on package downloads)
 
 ## Application Features
 
@@ -137,15 +164,17 @@ Based on `src/Main.elm` color definitions:
 
 ## Known Limitations
 
-- **Build System**: Cannot install local npm dependencies due to native compilation issues
-- **Elm Compilation**: Network restrictions prevent package downloads
-- **Testing**: No functional automated test infrastructure
-- **Development Workflow**: Must rely on pre-built version for testing changes
+- **Network Restrictions**: Cannot download Elm packages from package.elm-lang.org due to timeouts
+- **Elm Package Downloads**: Build and test scripts may fail on first run due to network restrictions  
+- **Testing**: No functional automated test infrastructure due to network limitations
+- **elm-review**: Available but should not be run yet (future task to configure rules)
 
 ## CRITICAL Reminders
 
-- **NEVER** attempt `npm install` - it will fail after several minutes of compilation attempts
-- **ALWAYS** use the docs/ directory HTTP server method for testing
-- **ALWAYS** test complete user scenarios, not just application startup
-- **NO BUILD TIMEOUTS** needed since local building is not functional
-- Elm language server and development tools are not available due to package installation issues
+- **ALWAYS** run `npm run format` after making any changes to source code
+- **NEVER** edit `elm.json` directly - use `npm run deps` instead
+- **DO NOT** run `npm run review` yet - this is a future task to configure rules
+- Use `npm run dev` for development testing (may fail on first run due to network)
+- Use `npm run build` + serve `dist/` as fallback if dev server fails
+- Network restrictions may prevent initial builds - this is expected behavior
+- `npm install` now works properly with the modernized build system
