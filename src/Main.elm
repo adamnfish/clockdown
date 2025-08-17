@@ -584,7 +584,7 @@ clockScreen model timer =
                 Nothing ->
                     el
                         [ width <| fillPortion 1
-                        , height <| px 150
+                        , height <| px 100
                         , Background.color <| rgb255 100 100 100
                         , Border.width 4
                         , Border.color <| rgb255 100 100 100
