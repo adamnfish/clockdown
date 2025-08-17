@@ -26,25 +26,23 @@ The build system has been modernized and now uses standard npm workflows:
 **Development server (recommended):**
 - `npm run dev` -- starts Parcel dev server (usually on port 1234)
 - Hot reloading and development features included
-- **NOTE:** May fail due to network timeouts downloading Elm packages on first run
+-- **NOTE:** If the dev server fails due to network timeouts downloading Elm packages on first run, retry the command until it succeeds. Do not give up after the first failure.
 
 **Alternative for testing:**
 - `npm run build` to create `dist/` directory (if network allows)
 - Serve `dist/` directory: `cd dist && python3 -m http.server 8000`
 
 ### Build Process
-Building works locally but has network limitations:
+Building works locally but has network limitations - retry the command if it fails:
 
-- `npm run build` -- **PARTIALLY WORKS** - fails due to package.elm-lang.org network timeouts
+- `npm run build` -- **PARTIALLY WORKS** - may initially fail due to package.elm-lang.org network timeouts
 - `npm run dev` -- **PARTIALLY WORKS** - may fail on first run due to package downloads
 - Local tooling (parcel, elm-format) works fine once packages are available
-- Network restrictions prevent downloading Elm packages from package.elm-lang.org
 
 ### Testing and Code Quality
-- `npm run test` -- **FAILS** due to network restrictions preventing package downloads
-- `npm run format` -- **WORKS** - always run this after making changes to source code
+- `npm run test` -- runs the elm tests
+- `npm run format` -- always run this after making changes to source code
 - `npm run review` -- **AVAILABLE** but don't run yet (future task to configure rules)
-- Manual testing is the primary validation method due to network restrictions
 
 ## Validation
 
@@ -61,7 +59,7 @@ Building works locally but has network limitations:
 ### Manual Validation Process
 - ALWAYS run `npm run format` after making any code changes
 - Use `npm run dev` for development testing (may fail on first run due to network)
-- If dev server fails, build with `npm run build` and serve `dist/` directory
+- If dev server fails, retry. As a last resort build with `npm run build` and serve the `dist/` directory
 - Take screenshots to document UI changes
 - Test complete timer workflows: start → player selection → timing → pause → resume
 - Verify time display formatting works correctly (starts at 0, counts up in seconds)
