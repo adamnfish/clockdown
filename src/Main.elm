@@ -1,10 +1,9 @@
-module Main exposing (..)
+module Main exposing (main, updateAfter)
 
 import Browser
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
-import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
@@ -50,9 +49,10 @@ type alias Timer =
     }
 
 
-type Count
-    = Down Int
-    | Up
+type
+    Count
+    -- may also support Down in the future
+    = Up
 
 
 type Player
@@ -88,8 +88,7 @@ init resources =
 
 
 type Msg
-    = NoOp
-    | Tick Posix
+    = Tick Posix
     | UpdateGameSettings GameSettings
     | AddPlayer Color
     | Start
@@ -101,9 +100,6 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model, Cmd.none )
-
         Tick time ->
             ( { model | now = time }
             , Cmd.none
@@ -653,44 +649,6 @@ formatTime millis =
          else
             text <| (String.fromInt totalSeconds ++ "\"")
         )
-
-
-stripedBg : Color -> Element Msg
-stripedBg colour =
-    html <|
-        Svg.svg
-            [ Svg.Attributes.width "100%"
-            , Svg.Attributes.height "100%"
-            , Svg.Attributes.viewBox "0 0 100 100"
-            ]
-            [ Svg.defs
-                []
-                [ Svg.pattern
-                    [ Svg.Attributes.id "stripes_pattern"
-                    , Svg.Attributes.patternUnits "userSpaceOnUse"
-                    , Svg.Attributes.width "15"
-                    , Svg.Attributes.height "15"
-                    , Svg.Attributes.patternTransform "rotate(45)"
-                    ]
-                    [ Svg.line
-                        [ Svg.Attributes.x1 "0"
-                        , Svg.Attributes.y "0"
-                        , Svg.Attributes.x2 "0"
-                        , Svg.Attributes.y2 "15"
-                        , Svg.Attributes.stroke <| rgbToStyle <| toRgb colour
-                        , Svg.Attributes.strokeWidth "20"
-                        ]
-                        []
-                    ]
-                ]
-            , Svg.rect
-                [ Svg.Attributes.width "100%"
-                , Svg.Attributes.height "100%"
-                , Svg.Attributes.fill "url(#stripes_pattern)"
-                , Svg.Attributes.opacity "1"
-                ]
-                []
-            ]
 
 
 to255 : Float -> Int

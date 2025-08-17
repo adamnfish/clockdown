@@ -16,25 +16,21 @@ To build for production:
 npm run build
 ```
 
+Remember to run elm-format when making changes to the source code.
+
+    npm run format
+
+### Dependency updates
+
+Do not edit the elm.json file directly. Use the elm-json tool to manage dependency updates, which can be run using the `deps` script.
+
+    npm run deps -- install <package>
+
+For more information run `npm run deps -- --help` (or use elm-json directly with `npx elm-json`).
+
 ## Deployment
 
 This project uses GitHub Actions for automatic deployment to GitHub Pages. The workflow builds the site and publishes it whenever changes are pushed to the main branch.
-
-### Setting up GitHub Pages with GitHub Actions
-
-To configure the repository to use GitHub Actions for publishing (instead of the docs folder), follow these steps:
-
-1. Go to your repository settings on GitHub
-2. Navigate to **Pages** in the left sidebar
-3. Under **Source**, select **"GitHub Actions"** instead of "Deploy from a branch"
-4. The GitHub Actions workflow (`.github/workflows/deploy.yml`) will automatically build and deploy the site
-
-That's it! Your site will now be automatically built and deployed whenever you push to the main branch.
-
-The workflow will:
-- Install dependencies with `npm ci`
-- Build the site with `npm run build` (outputs to `dist/`)
-- Deploy the built files to GitHub Pages
 
 ## Build Process
 
