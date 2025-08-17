@@ -20,6 +20,30 @@ Remember to run elm-format when making changes to the source code.
 
     npm run format
 
+## Testing
+
+### Unit Tests
+```bash
+npm test
+```
+
+### End-to-End Tests
+```bash
+# Full test runner with automatic server setup
+npm run test:e2e:run
+
+# Or run Playwright directly (requires browsers installed)
+npm run test:e2e
+```
+
+The e2e tests are located in the `e2e/` directory and test the core functionality:
+- Application startup and navigation
+- Player management (adding players, different counts)
+- Timer functionality (start, pause, resume, player switching)
+- Layout and visual appearance at various player counts
+
+See `e2e/README.md` for detailed information about the e2e test setup and coverage.
+
 ### Dependency updates
 
 Do not edit the elm.json file directly. Use the elm-json tool to manage dependency updates, which can be run using the `deps` script.

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="theme-color" content="#000000">
+    <title>Clockdown</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: rgb(80, 80, 80);
+            color: rgba(230, 230, 230, 0.8);
+        }
+        
+        .header {
+            background-color: rgb(50, 50, 50);
+            border-bottom: 1px solid #333;
+            padding: 12px;
+        }
+        
+        .title {
+            font-size: 18px;
+            text-align: center;
+        }
+        
+        .container {
+            width: 100%;
+            height: calc(100vh - 60px);
+            padding: 16px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            height: 100%;
+        }
+        
+        .clock-screen {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+            height: 100%;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 8px;
+            padding: 16px 16px 8px 16px;
+        }
+        
+        .start-button {
+            flex: 3;
+            height: 150px;
+            background-color: rgb(100, 100, 100);
+            border: 4px solid rgb(200, 200, 200);
+            color: rgba(230, 230, 230, 0.8);
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .add-player-button {
+            flex: 1;
+            height: 150px;
+            background-color: rgb(100, 100, 100);
+            border: 4px solid rgb(200, 200, 200);
+            color: rgba(230, 230, 230, 0.8);
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .players-preview {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 8px 16px 16px 16px;
+        }
+        
+        .player-preview {
+            flex: 1;
+            border-radius: 4px;
+        }
+        
+        .game-controls {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .spacer {
+            flex: 3;
+        }
+        
+        .pause-button {
+            flex: 1;
+            height: 100px;
+            background-color: rgba(0, 0, 0, 0);
+            border: 4px solid rgb(200, 200, 200);
+            color: rgba(230, 230, 230, 0.8);
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .pause-button.paused {
+            background-color: rgb(180, 100, 100);
+        }
+        
+        .players-game {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .player-section {
+            flex: 1;
+            border: 8px solid rgb(180, 180, 180);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            font-size: 40px;
+            font-weight: bold;
+        }
+        
+        .player-section.thinking {
+            background-color: rgb(100, 100, 100);
+            font-size: 30px;
+        }
+        
+        .player-section.paused::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(0, 0, 0, 0.3) 10px,
+                rgba(0, 0, 0, 0.3) 20px
+            );
+        }
+        
+        /* Player colors */
+        .player-red { background-color: rgb(180, 100, 100); border-color: rgb(180, 100, 100); }
+        .player-blue { background-color: rgb(100, 150, 180); border-color: rgb(100, 150, 180); }
+        .player-green { background-color: rgb(100, 180, 100); border-color: rgb(100, 180, 100); }
+        .player-yellow { background-color: rgb(180, 180, 100); border-color: rgb(180, 180, 100); }
+        .player-purple { background-color: rgb(150, 100, 180); border-color: rgb(150, 100, 180); }
+        .player-orange { background-color: rgb(200, 120, 80); border-color: rgb(200, 120, 80); }
+        .player-brown { background-color: rgb(100, 60, 10); border-color: rgb(100, 60, 10); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">Clockdown</div>
+    </div>
+    
+    <div class="container">
+        <div id="welcome-screen" class="welcome-screen">
+            <div class="controls">
+                <button id="start-button" class="start-button">Start</button>
+                <button id="add-player-button" class="add-player-button">+ player</button>
+            </div>
+            <div id="players-preview" class="players-preview">
+                <div class="player-preview player-red"></div>
+                <div class="player-preview player-blue"></div>
+            </div>
+        </div>
+        
+        <div id="clock-screen" class="clock-screen">
+            <div class="game-controls">
+                <div class="spacer"></div>
+                <button id="pause-button" class="pause-button">Pause</button>
+            </div>
+            <div id="players-game" class="players-game">
+                <!-- Player sections will be dynamically generated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ClockdownApp {
+            constructor() {
+                this.players = ['red', 'blue'];
+                this.playerColors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'brown'];
+                this.gameStarted = false;
+                this.paused = false;
+                this.activePlayerIndex = null;
+                this.timers = {};
+                this.startTime = null;
+                this.pauseTime = null;
+                
+                this.init();
+            }
+            
+            init() {
+                document.getElementById('start-button').addEventListener('click', () => this.startGame());
+                document.getElementById('add-player-button').addEventListener('click', () => this.addPlayer());
+                document.getElementById('pause-button').addEventListener('click', () => this.togglePause());
+                
+                this.updatePreview();
+            }
+            
+            addPlayer() {
+                if (this.players.length < this.playerColors.length) {
+                    this.players.push(this.playerColors[this.players.length]);
+                    this.updatePreview();
+                }
+            }
+            
+            updatePreview() {
+                const preview = document.getElementById('players-preview');
+                preview.innerHTML = '';
+                this.players.forEach(color => {
+                    const div = document.createElement('div');
+                    div.className = `player-preview player-${color}`;
+                    preview.appendChild(div);
+                });
+            }
+            
+            startGame() {
+                this.gameStarted = true;
+                this.startTime = Date.now();
+                this.players.forEach((color, index) => {
+                    this.timers[index] = 0;
+                });
+                
+                document.getElementById('welcome-screen').style.display = 'none';
+                document.getElementById('clock-screen').style.display = 'flex';
+                
+                this.renderGamePlayers();
+            }
+            
+            renderGamePlayers() {
+                const container = document.getElementById('players-game');
+                container.innerHTML = '';
+                
+                this.players.forEach((color, index) => {
+                    const section = document.createElement('div');
+                    section.className = `player-section player-${color}`;
+                    section.id = `player-${index}`;
+                    
+                    if (this.activePlayerIndex === null) {
+                        section.classList.add('thinking');
+                        section.textContent = 'start';
+                        section.addEventListener('click', () => this.startPlayerTimer(index));
+                    } else if (this.activePlayerIndex === index) {
+                        section.textContent = this.formatTime(this.getPlayerTime(index));
+                        section.addEventListener('click', () => this.nextPlayer());
+                    } else {
+                        section.classList.add('thinking');
+                        section.textContent = this.formatTime(this.timers[index]);
+                    }
+                    
+                    if (this.paused) {
+                        section.classList.add('paused');
+                    }
+                    
+                    container.appendChild(section);
+                });
+            }
+            
+            startPlayerTimer(playerIndex) {
+                if (this.activePlayerIndex === null && !this.paused) {
+                    this.activePlayerIndex = playerIndex;
+                    this.timers[playerIndex] = Date.now();
+                    this.renderGamePlayers();
+                    this.startTimerUpdate();
+                }
+            }
+            
+            nextPlayer() {
+                if (this.activePlayerIndex !== null && !this.paused) {
+                    // Accumulate time for current player
+                    const now = Date.now();
+                    const elapsed = now - this.timers[this.activePlayerIndex];
+                    this.timers[this.activePlayerIndex] = elapsed;
+                    
+                    // Move to next player (circular)
+                    this.activePlayerIndex = (this.activePlayerIndex + 1) % this.players.length;
+                    this.timers[this.activePlayerIndex] = now;
+                    
+                    this.renderGamePlayers();
+                }
+            }
+            
+            togglePause() {
+                this.paused = !this.paused;
+                const button = document.getElementById('pause-button');
+                
+                if (this.paused) {
+                    button.textContent = 'Resume';
+                    button.classList.add('paused');
+                    this.pauseTime = Date.now();
+                    if (this.activePlayerIndex !== null) {
+                        const elapsed = this.pauseTime - this.timers[this.activePlayerIndex];
+                        this.timers[this.activePlayerIndex] = elapsed;
+                    }
+                } else {
+                    button.textContent = 'Pause';
+                    button.classList.remove('paused');
+                    if (this.activePlayerIndex !== null) {
+                        this.timers[this.activePlayerIndex] = Date.now();
+                    }
+                    this.startTimerUpdate();
+                }
+                
+                this.renderGamePlayers();
+            }
+            
+            getPlayerTime(playerIndex) {
+                if (playerIndex === this.activePlayerIndex && !this.paused) {
+                    const elapsed = Date.now() - this.timers[playerIndex];
+                    return elapsed;
+                } else if (typeof this.timers[playerIndex] === 'number') {
+                    return this.timers[playerIndex];
+                }
+                return 0;
+            }
+            
+            formatTime(ms) {
+                const seconds = Math.floor(ms / 1000);
+                return `${seconds}"`;
+            }
+            
+            startTimerUpdate() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                }
+                
+                this.timerInterval = setInterval(() => {
+                    if (!this.paused && this.activePlayerIndex !== null) {
+                        this.renderGamePlayers();
+                    }
+                }, 100);
+            }
+        }
+        
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.clockdownApp = new ClockdownApp();
+        });
+    </script>
+</body>
+</html>
