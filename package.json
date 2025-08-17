@@ -6,7 +6,7 @@
     "test": "elm-test",
     "dev": "parcel src/index.html",
     "build": "rm -rf dist && parcel build src/index.html --dist-dir dist --public-url ./",
-    "format": "elm-format --yes src/",
+    "format": "elm-format --yes src/ tests/",
     "review": "elm-review"
   },
   "author": "adamnfish",
