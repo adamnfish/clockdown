@@ -7,7 +7,8 @@
     "dev": "parcel src/index.html",
     "build": "rm -rf dist && parcel build src/index.html --dist-dir dist --public-url ./",
     "format": "elm-format --yes src/ tests/",
-    "review": "elm-review"
+    "review": "elm-review",
+    "deps": "elm-json"
   },
   "author": "adamnfish",
   "license": "ISC",
@@ -16,7 +17,7 @@
     "elm": "^0.19.1-6",
     "elm-format": "^0.8.7",
     "elm-json": "^0.2.13",
-    "elm-review": "^2.10.3",
+    "elm-review": "^2.13.4",
     "elm-test": "^0.19.1-revision12",
     "parcel": "^2.12.0"
   }

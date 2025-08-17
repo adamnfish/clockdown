@@ -1,10 +1,9 @@
-module Main exposing (..)
+module Main exposing (main, updateAfter)
 
 import Browser
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
-import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
@@ -50,9 +49,10 @@ type alias Timer =
     }
 
 
-type Count
-    = Down Int
-    | Up
+type
+    Count
+    -- may also support Down in the future
+    = Up
 
 
 type Player
@@ -88,8 +88,7 @@ init resources =
 
 
 type Msg
-    = NoOp
-    | Tick Posix
+    = Tick Posix
     | UpdateGameSettings GameSettings
     | AddPlayer Color
     | Start
@@ -101,9 +100,6 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model, Cmd.none )
-
         Tick time ->
             ( { model | now = time }
             , Cmd.none

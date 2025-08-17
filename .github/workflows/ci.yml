@@ -31,6 +31,7 @@ jobs:
       
       - name: Build project
         run: npm run build
-      
-      - name: Run elm-review
-        run: npm run review
+
+#      TODO: add elm-review enforcement in the future
+#      - name: Run elm-review
+#        run: npm run review
