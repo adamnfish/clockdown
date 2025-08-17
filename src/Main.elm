@@ -68,13 +68,21 @@ type Player
 
 
 colours =
-    { red = { name = "red", color = rgb255 180 100 100 }
-    , blue = { name = "blue", color = rgb255 100 150 180 }
+    { red = { name = "red", color = rgb255 140 60 60 }
+    , blue = { name = "blue", color = rgb255 70 110 140 }
     , green = { name = "green", color = rgb255 100 180 100 }
-    , yellow = { name = "yellow", color = rgb255 180 180 100 }
-    , purple = { name = "purple", color = rgb255 150 100 180 }
+    , yellow = { name = "yellow", color = rgb255 140 120 40 }
+    , purple = { name = "purple", color = rgb255 110 60 130 }
     , orange = { name = "orange", color = rgb255 200 120 80 }
     , brown = { name = "brown", color = rgb255 100 60 10 }
+    , pink = { name = "pink", color = rgb255 200 100 200 }
+    , teal = { name = "teal", color = rgb255 54 162 163 }
+    , olive = { name = "olive", color = rgb255 120 130 40 }
+    , cyan = { name = "cyan", color = rgb255 60 200 220 }
+    , silver = { name = "silver", color = rgb255 120 120 140 }
+    , navy = { name = "navy", color = rgb255 30 40 90 }
+    , gold = { name = "gold", color = rgb255 180 140 60 }
+    , darkGreen = { name = "dark green", color = rgb255 30 80 30 }
     }
 
 
@@ -393,6 +401,27 @@ welcomeScreen model gameSettings =
 
             else if not <| List.member colours.brown gameSettings.players then
                 colours.brown
+
+            else if not <| List.member colours.pink gameSettings.players then
+                colours.pink
+
+            else if not <| List.member colours.teal gameSettings.players then
+                colours.teal
+
+            else if not <| List.member colours.cyan gameSettings.players then
+                colours.cyan
+
+            else if not <| List.member colours.silver gameSettings.players then
+                colours.silver
+
+            else if not <| List.member colours.navy gameSettings.players then
+                colours.navy
+
+            else if not <| List.member colours.gold gameSettings.players then
+                colours.gold
+
+            else if not <| List.member colours.darkGreen gameSettings.players then
+                colours.darkGreen
 
             else
                 let

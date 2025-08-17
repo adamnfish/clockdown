@@ -8,7 +8,6 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:chromium": "playwright test --project=chromium",
-    "test:e2e:run": "./run-e2e-tests.sh",
     "dev": "parcel src/index.html",
     "build": "rm -rf dist && parcel build src/index.html --dist-dir dist --public-url ./",
     "format": "elm-format --yes src/ tests/",
