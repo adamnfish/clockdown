@@ -1,6 +1,8 @@
 module Main exposing (main, updateAfter)
 
 import Browser
+import Browser.Dom
+import Browser.Events
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -24,6 +26,7 @@ type alias Model =
     { lifecycle : Lifecycle
     , now : Posix
     , resources : Resources
+    , screenWidth : Int
     }
 
 
@@ -93,8 +96,12 @@ init resources =
                 { count = Up, players = [ colours.red, colours.blue ] }
       , now = millisToPosix 0
       , resources = resources
+      , screenWidth = 1200
       }
-    , Task.perform Tick Time.now
+    , Cmd.batch
+        [ Task.perform Tick Time.now
+        , Task.perform GotViewport Browser.Dom.getViewport
+        ]
     )
 
 
@@ -110,6 +117,8 @@ type Msg
     | FirstPlayer Color -- TODO: swap for index
     | Pause
     | Next
+    | WindowResize Int Int
+    | GotViewport Browser.Dom.Viewport
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -286,6 +295,16 @@ update msg model =
                     ( { model | lifecycle = Clock newTimer }
                     , Cmd.none
                     )
+
+        WindowResize width height ->
+            ( { model | screenWidth = width }
+            , Cmd.none
+            )
+
+        GotViewport viewport ->
+            ( { model | screenWidth = round viewport.viewport.width }
+            , Cmd.none
+            )
 
 
 activeColour : List Player -> Maybe Color
@@ -578,6 +597,41 @@ groupPlayersIntoRows columnsPerRow players =
         groupHelper players []
 
 
+{-| Calculate responsive font size based on screen width and player count
+-}
+calculateTimerFontSize : Int -> Int -> Int
+calculateTimerFontSize screenWidth playerCount =
+    let
+        ( _, columnsPerRow ) =
+            calculatePlayerLayout playerCount
+
+        baseButtonWidth =
+            (screenWidth - 48) // columnsPerRow
+
+        baseFontSize =
+            if screenWidth < 400 then
+                max 16 (baseButtonWidth // 12)
+
+            else if screenWidth < 768 then
+                max 20 (baseButtonWidth // 10)
+
+            else
+                max 24 (baseButtonWidth // 8)
+    in
+    min baseFontSize 40
+
+
+{-| Calculate responsive font size for start button text
+-}
+calculateStartFontSize : Int -> Int -> Int
+calculateStartFontSize screenWidth playerCount =
+    let
+        timerSize =
+            calculateTimerFontSize screenWidth playerCount
+    in
+    max 16 (timerSize - 6)
+
+
 clockScreen : Model -> Timer -> Element Msg
 clockScreen model timer =
     let
@@ -602,51 +656,43 @@ clockScreen model timer =
         , padding 16
         , spacing 16
         ]
-        [ row
-            [ width fill
-            , spacing 8
-            ]
-            [ el
-                [ width <| fillPortion 3 ]
-                Element.none
-            , case activeColour timer.players of
-                Nothing ->
-                    el
-                        [ width <| fillPortion 1
-                        , height <| px 100
-                        , Background.color <| rgb255 100 100 100
-                        , Border.width 4
-                        , Border.color <| rgb255 100 100 100
-                        ]
-                    <|
-                        el [ centerX, centerY ] <|
-                            text "-"
+        [ case activeColour timer.players of
+            Nothing ->
+                el
+                    [ width fill
+                    , height <| px 100
+                    , Background.color <| rgb255 100 100 100
+                    , Border.width 4
+                    , Border.color <| rgb255 100 100 100
+                    ]
+                <|
+                    el [ centerX, centerY ] <|
+                        text "-"
 
-                Just colour ->
-                    Input.button
-                        [ width <| fillPortion 1
-                        , height <| px 100
-                        , Background.color
-                            (if isPaused then
-                                colour.color
+            Just colour ->
+                Input.button
+                    [ width fill
+                    , height <| px 100
+                    , Background.color
+                        (if isPaused then
+                            colour.color
 
-                             else
-                                rgba255 0 0 0 0
-                            )
-                        , Border.width 4
-                        , Border.color <| rgb255 200 200 200
-                        , Font.center
-                        ]
-                        { onPress =
-                            Just Pause
-                        , label =
-                            if isPaused then
-                                text "Resume"
+                         else
+                            rgba255 0 0 0 0
+                        )
+                    , Border.width 4
+                    , Border.color <| rgb255 200 200 200
+                    , Font.center
+                    ]
+                    { onPress =
+                        Just Pause
+                    , label =
+                        if isPaused then
+                            text "Resume"
 
-                            else
-                                text "Pause"
-                        }
-            ]
+                        else
+                            text "Pause"
+                    }
         , let
             ( _, columnsPerRow ) =
                 calculatePlayerLayout (List.length timer.players)
@@ -726,7 +772,7 @@ renderPlayerButton model timer allPlayersThinking isPaused p =
                         , htmlAttribute <| Html.Attributes.id ("player-" ++ colour.name)
                         ]
                     <|
-                        el [ centerX, centerY, rotation, Font.size 40 ] <|
+                        el [ centerX, centerY, rotation, Font.size (calculateTimerFontSize model.screenWidth (List.length timer.players)) ] <|
                             formatTime (timeDelta + acc)
 
                 else
@@ -741,7 +787,7 @@ renderPlayerButton model timer allPlayersThinking isPaused p =
                         { onPress = Just Next
                         , label =
                             el
-                                [ centerX, centerY, rotation, Font.size 40 ]
+                                [ centerX, centerY, rotation, Font.size (calculateTimerFontSize model.screenWidth (List.length timer.players)) ]
                             <|
                                 formatTime (timeDelta + acc)
                         }
@@ -763,7 +809,7 @@ renderPlayerButton model timer allPlayersThinking isPaused p =
                         , htmlAttribute <| Html.Attributes.id ("player-" ++ colour.name)
                         ]
                         { onPress = Just <| FirstPlayer colour
-                        , label = el [ centerX, centerY, rotation, Font.size 30 ] <| text "start"
+                        , label = el [ centerX, centerY, rotation, Font.size (calculateStartFontSize model.screenWidth (List.length timer.players)) ] <| text "start"
                         }
 
                 else
@@ -776,7 +822,7 @@ renderPlayerButton model timer allPlayersThinking isPaused p =
                         , htmlAttribute <| Html.Attributes.id ("player-" ++ colour.name)
                         ]
                     <|
-                        el [ centerX, centerY, rotation, Font.size 30 ] <|
+                        el [ centerX, centerY, rotation, Font.size (calculateTimerFontSize model.screenWidth (List.length timer.players)) ] <|
                             formatTime acc
 
 
@@ -840,5 +886,9 @@ main =
         , init = init
         , update = update
         , subscriptions =
-            \model -> Time.every 50 Tick
+            \model ->
+                Sub.batch
+                    [ Time.every 50 Tick
+                    , Browser.Events.onResize WindowResize
+                    ]
         }
