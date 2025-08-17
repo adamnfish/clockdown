@@ -38,18 +38,9 @@ The e2e tests cover the following scenarios as specified in the requirements:
 ### Prerequisites
 ```bash
 npm install
+npx playwright install
 ```
 
-### Running Tests
-
-Due to network restrictions that prevent building the full Elm application, these tests use a mock HTML/JavaScript version of the app that replicates the core functionality.
-
-#### Start the test server manually:
-```bash
-./start-test-server.sh
-# or
-cd test-app && python3 -m http.server 3000
-```
 
 #### Run tests (once Playwright browsers are available):
 ```bash
@@ -66,17 +57,6 @@ npm run test:e2e:headed
 npx playwright test e2e/app-startup.spec.js
 ```
 
-## Test App
-
-The `test-app/` directory contains a simplified HTML/JavaScript implementation of the Clockdown application that provides the same functionality as the Elm version:
-
-- Multi-player timer interface
-- Add/remove players (up to 7 different colors)
-- Start, pause, resume functionality
-- Timer counting in seconds
-- Player priority passing
-- Visual states for active/thinking/paused players
-
 ## Browser Support
 
 The tests are configured to run on:
@@ -90,15 +70,14 @@ The tests are configured to run on:
 
 The Playwright configuration is in `playwright.config.js` and includes:
 - Test directory: `./e2e`
-- Base URL: `http://127.0.0.1:3000`
+- Base URL: `http://127.0.0.1:1234`
 - Automatic server startup
 - Trace collection on retry
 - HTML reporting
+- Screenshots on failure
 
 ## Notes
 
-- The mock application closely mirrors the behavior of the actual Elm application
 - Tests focus on user interactions and visible behavior
 - Timer accuracy is tested with reasonable tolerances to account for execution timing
-- Visual tests check for CSS classes and computed styles
 - Mobile tests verify responsive behavior

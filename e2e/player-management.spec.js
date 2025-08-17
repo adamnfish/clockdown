@@ -5,83 +5,81 @@ test.describe('Player Management', () => {
   test('should add new players when + player button is clicked', async ({ page }) => {
     await page.goto('/');
     
-    // Initially should have 2 players
-    await expect(page.locator('.player-preview')).toHaveCount(2);
+    // Initially should have 2 players (check via text=start count after starting game)
+    await page.click('text="Start"');
+    await expect(page.locator('text="start"')).toHaveCount(2);
+    
+    // Go back to test adding players
+    await page.goto('/');  // Reset to welcome screen
     
     // Add a third player
-    await page.click('#add-player-button');
-    await expect(page.locator('.player-preview')).toHaveCount(3);
-    await expect(page.locator('.player-preview').nth(2)).toHaveClass(/player-green/);
+    await page.click('text="+ player"');
+    // Verify by starting game and checking player count
+    await page.click('text="Start"');
+    await expect(page.locator('text="start"')).toHaveCount(3);
     
-    // Add a fourth player
-    await page.click('#add-player-button');
-    await expect(page.locator('.player-preview')).toHaveCount(4);
-    await expect(page.locator('.player-preview').nth(3)).toHaveClass(/player-yellow/);
-    
-    // Add more players up to the limit
-    await page.click('#add-player-button'); // Purple
-    await page.click('#add-player-button'); // Orange
-    await page.click('#add-player-button'); // Brown
-    await expect(page.locator('.player-preview')).toHaveCount(7);
-    
-    // Should not add more than 7 players
-    await page.click('#add-player-button');
-    await expect(page.locator('.player-preview')).toHaveCount(7);
-  });
-
-  test('should correctly display player colors in order', async ({ page }) => {
+    // Go back to continue testing
     await page.goto('/');
     
-    // Add players and verify colors
-    const expectedColors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'brown'];
+    // Add players to test the limit
+    await page.click('text="+ player"'); // 3rd player
+    await page.click('text="+ player"'); // 4th player
     
-    // Add all possible players
-    for (let i = 2; i < expectedColors.length; i++) {
-      await page.click('#add-player-button');
+    // Add more players up to the limit
+    await page.click('text="+ player"'); // 5th
+    await page.click('text="+ player"'); // 6th  
+    await page.click('text="+ player"'); // 7th
+    await page.click('text="+ player"'); // 8th
+
+    // Verify we have 8 players by starting game
+    await page.click('text="Start"');
+    await expect(page.locator('text="start"')).toHaveCount(8);
+  });
+
+  test('should correctly add up to 8 players', async ({ page }) => {
+    await page.goto('/');
+    
+    // Add all possible players (6 more to reach 8 total after initial 2)
+    for (let i = 0; i < 6; i++) {
+      await page.click('text="+ player"');
     }
     
-    // Verify all player colors are correct
-    for (let i = 0; i < expectedColors.length; i++) {
-      await expect(page.locator('.player-preview').nth(i)).toHaveClass(new RegExp(`player-${expectedColors[i]}`));
-    }
+    // Verify we can start a game with 8 players
+    await page.click('text="Start"');
+    await expect(page.locator('text="start"')).toHaveCount(8);
   });
 
   test('should maintain player count when game starts', async ({ page }) => {
     await page.goto('/');
     
     // Add extra players
-    await page.click('#add-player-button'); // 3 players
-    await page.click('#add-player-button'); // 4 players
+    await page.click('text="+ player"'); // 3 players
+    await page.click('text="+ player"'); // 4 players
     
     // Start the game
-    await page.click('#start-button');
+    await page.click('text="Start"');
     
-    // Check that we have 4 player sections in the game
-    await expect(page.locator('.player-section')).toHaveCount(4);
-    
-    // Check that colors are preserved
-    await expect(page.locator('.player-section').nth(0)).toHaveClass(/player-red/);
-    await expect(page.locator('.player-section').nth(1)).toHaveClass(/player-blue/);
-    await expect(page.locator('.player-section').nth(2)).toHaveClass(/player-green/);
-    await expect(page.locator('.player-section').nth(3)).toHaveClass(/player-yellow/);
+    // Check that we have 4 player start buttons in the game
+    await expect(page.locator('text="start"')).toHaveCount(4);
   });
 
   test('should show start buttons for all players initially', async ({ page }) => {
     await page.goto('/');
     
     // Add one more player for variety
-    await page.click('#add-player-button');
+    await page.click('text="+ player"');
     
     // Start the game
-    await page.click('#start-button');
+    await page.click('text="Start"');
     
-    // All players should be in "thinking" state with "start" text
-    const playerSections = page.locator('.player-section');
-    await expect(playerSections).toHaveCount(3);
+    // All players should show "start" text initially
+    await expect(page.locator('text="start"')).toHaveCount(3);
     
-    for (let i = 0; i < 3; i++) {
-      await expect(playerSections.nth(i)).toHaveClass(/thinking/);
-      await expect(playerSections.nth(i)).toHaveText('start');
-    }
+    // Start first player to activate timer mode
+    await page.click('#player-red');
+    
+    // Should now have red player active, others at 0
+    await expect(page.locator('#player-blue')).toContainText('0"');
+    await expect(page.locator('#player-green')).toContainText('0"');
   });
 });

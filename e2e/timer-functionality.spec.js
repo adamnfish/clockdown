@@ -4,141 +4,129 @@ const { test, expect } = require('@playwright/test');
 test.describe('Timer Functionality', () => {
   test('should start timer when player clicks their start button', async ({ page }) => {
     await page.goto('/');
-    await page.click('#start-button');
+    await page.click('text="Start"');
     
-    // Click on the first player to start their timer
-    await page.click('#player-0');
+    // Click on the first player (red) start button to start their timer
+    await page.click('#player-red');
     
-    // Player 0 should no longer have "thinking" class and should show timer
-    await expect(page.locator('#player-0')).not.toHaveClass(/thinking/);
+    // Red player should now show timer, blue player should show 0
+    await page.waitForTimeout(100); // Brief wait for timer to appear
+    await expect(page.locator('#player-blue')).toContainText('0"'); // Blue player inactive
     
-    // Other players should still be in thinking state
-    await expect(page.locator('#player-1')).toHaveClass(/thinking/);
+    // Should have a Pause button visible
+    await expect(page.locator('text="Pause"')).toBeVisible();
     
     // Wait a moment and check that timer is counting
     await page.waitForTimeout(1100); // Wait just over 1 second
     
-    // Player 0 should show at least 1 second
-    const timerText = await page.locator('#player-0').textContent();
-    expect(timerText).toMatch(/[1-9]\d*"/); // Should show 1" or higher
+    // Red player should show at least 1 second
+    const redPlayerText = await page.locator('#player-red').textContent();
+    expect(parseInt(redPlayerText.replace('"', ''))).toBeGreaterThanOrEqual(1);
   });
 
   test('should count timer correctly in seconds', async ({ page }) => {
     await page.goto('/');
-    await page.click('#start-button');
+    await page.click('text="Start"');
     
-    // Start timer for player 0
-    await page.click('#player-0');
+    // Start timer for first player (red)
+    await page.click('#player-red');
     
-    // Check initial state (should be 0" or close to it)
-    await expect(page.locator('#player-0')).toHaveText(/0"/);
+    // Check that blue player shows 0 and red player will count up
+    await expect(page.locator('#player-blue')).toContainText('0"');
     
     // Wait for about 2.1 seconds and check timer
     await page.waitForTimeout(2100);
     
-    const timerText = await page.locator('#player-0').textContent();
-    // Should show 2" (2 seconds) - allowing for some timing variance
-    expect(parseInt(timerText.replace('"', ''))).toBeGreaterThanOrEqual(2);
-    expect(parseInt(timerText.replace('"', ''))).toBeLessThanOrEqual(3);
+    // Red player should show 2" (2 seconds)
+    const redPlayerText = await page.locator('#player-red').textContent();
+    const seconds = parseInt(redPlayerText.replace('"', ''));
+    expect(seconds).toBeGreaterThanOrEqual(2);
+    expect(seconds).toBeLessThanOrEqual(3);
   });
 
   test('should pass timer to next player when active player is clicked', async ({ page }) => {
     await page.goto('/');
-    await page.click('#start-button');
+    await page.click('text="Start"');
     
-    // Start timer for player 0
-    await page.click('#player-0');
+    // Start timer for first player (red)
+    await page.click('#player-red');
     
     // Wait a moment for timer to accumulate some time
     await page.waitForTimeout(1100);
     
-    // Click player 0 again to pass to next player
-    await page.click('#player-0');
+    // Click the active red player to pass to next player
+    await page.click('#player-red');
     
-    // Player 0 should now be in thinking state with accumulated time
-    await expect(page.locator('#player-0')).toHaveClass(/thinking/);
+    // Red player should now show accumulated time, blue should be active
+    const redPlayerText = await page.locator('#player-red').textContent();
+    expect(parseInt(redPlayerText.replace('"', ''))).toBeGreaterThanOrEqual(1);
     
-    // Player 1 should now be active (not thinking)
-    await expect(page.locator('#player-1')).not.toHaveClass(/thinking/);
-    
-    // Player 0 should show the accumulated time (at least 1 second)
-    const player0Time = await page.locator('#player-0').textContent();
-    expect(parseInt(player0Time.replace('"', ''))).toBeGreaterThanOrEqual(1);
+    // Blue player should now be active
+    await page.waitForTimeout(1100);
+    // Blue player should no not be showing 0 seconds
+    const bluePlayerText = await page.locator('#player-blue').textContent();
+    expect(bluePlayerText).not.toBe('0"');
   });
 
   test('should cycle through players correctly', async ({ page }) => {
     await page.goto('/');
     
     // Add one more player to test cycling through 3 players
-    await page.click('#add-player-button');
-    await page.click('#start-button');
+    await page.click('text="+ player"');
+    await page.click('text="Start"');
     
-    // Start with player 0
-    await page.click('#player-0');
-    await page.waitForTimeout(500);
+    // Should have 3 start buttons initially
+    await expect(page.locator('text="start"')).toHaveCount(3);
     
-    // Pass to player 1
-    await page.click('#player-0');
-    await expect(page.locator('#player-1')).not.toHaveClass(/thinking/);
-    await page.waitForTimeout(500);
+    // Start with red player
+    await page.click('#player-red');
+    await page.waitForTimeout(1100);
     
-    // Pass to player 2
-    await page.click('#player-1');
-    await expect(page.locator('#player-2')).not.toHaveClass(/thinking/);
-    await page.waitForTimeout(500);
+    // Blue and green should show 0", red should show time
+    await expect(page.locator('#player-blue')).toContainText('0"');
+    await expect(page.locator('#player-green')).toContainText('0"');
     
-    // Pass back to player 0 (cycling)
-    await page.click('#player-2');
-    await expect(page.locator('#player-0')).not.toHaveClass(/thinking/);
+    // Pass to next player by clicking red
+    await page.click('#player-red');
+    await page.waitForTimeout(1100);
     
-    // All players should have some accumulated time
-    for (let i = 0; i < 3; i++) {
-      if (i !== 0) { // Player 0 is currently active
-        const playerTime = await page.locator(`#player-${i}`).textContent();
-        expect(parseInt(playerTime.replace('"', ''))).toBeGreaterThanOrEqual(0);
-      }
-    }
+    // Red should maintain time, blue should be active, green still 0
+    const redTime = await page.locator('#player-red').textContent();
+    expect(parseInt(redTime.replace('"', ''))).toBeGreaterThan(0);
+    await expect(page.locator('#player-green')).toContainText('0"');
   });
 
   test('should pause and resume timers correctly', async ({ page }) => {
     await page.goto('/');
-    await page.click('#start-button');
+    await page.click('text="Start"');
     
-    // Start timer for player 0
-    await page.click('#player-0');
+    // Start timer for first player (red)
+    await page.click('#player-red');
     await page.waitForTimeout(1100);
     
     // Pause the game
-    await page.click('#pause-button');
+    await page.click('text="Pause"');
     
     // Pause button should show "Resume"
-    await expect(page.locator('#pause-button')).toHaveText('Resume');
-    await expect(page.locator('#pause-button')).toHaveClass(/paused/);
+    await expect(page.locator('text="Resume"')).toBeVisible();
     
-    // Player sections should show paused state
-    await expect(page.locator('#player-0')).toHaveClass(/paused/);
-    
-    // Get current time and wait
-    const pausedTime = await page.locator('#player-0').textContent();
+    // Get current time from red player and wait
+    const pausedTime = await page.locator('#player-red').textContent();
     await page.waitForTimeout(1000);
     
     // Time should not have changed while paused
-    const stillPausedTime = await page.locator('#player-0').textContent();
+    const stillPausedTime = await page.locator('#player-red').textContent();
     expect(pausedTime).toBe(stillPausedTime);
     
     // Resume the game
-    await page.click('#pause-button');
+    await page.click('text="Resume"');
     
     // Button should show "Pause" again
-    await expect(page.locator('#pause-button')).toHaveText('Pause');
-    await expect(page.locator('#pause-button')).not.toHaveClass(/paused/);
-    
-    // Player sections should not show paused state
-    await expect(page.locator('#player-0')).not.toHaveClass(/paused/);
+    await expect(page.locator('text="Pause"')).toBeVisible();
     
     // Timer should continue counting from where it left off
     await page.waitForTimeout(1100);
-    const resumedTime = await page.locator('#player-0').textContent();
+    const resumedTime = await page.locator('#player-red').textContent();
     expect(parseInt(resumedTime.replace('"', ''))).toBeGreaterThan(parseInt(pausedTime.replace('"', '')));
   });
 });

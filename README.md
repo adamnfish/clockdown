@@ -28,12 +28,19 @@ npm test
 ```
 
 ### End-to-End Tests
+
 ```bash
 # Full test runner with automatic server setup
 npm run test:e2e:run
 
 # Or run Playwright directly (requires browsers installed)
 npm run test:e2e
+```
+
+Be sure to set up playwright's browsers if this is the first run:
+
+```bash
+npx playwright install
 ```
 
 The e2e tests are located in the `e2e/` directory and test the core functionality:

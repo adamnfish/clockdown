@@ -7,6 +7,7 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
+import Html.Attributes
 import List.Extra
 import Maybe.Extra
 import Svg
@@ -55,19 +56,25 @@ type
     = Up
 
 
+type alias Color =
+    { name : String
+    , color : Element.Color
+    }
+
+
 type Player
     = Active Posix Int Color
     | Thinking Int Color
 
 
 colours =
-    { red = rgb255 180 100 100
-    , blue = rgb255 100 150 180
-    , green = rgb255 100 180 100
-    , yellow = rgb255 180 180 100
-    , purple = rgb255 150 100 180
-    , orange = rgb255 200 120 80
-    , brown = rgb255 100 60 10
+    { red = { name = "red", color = rgb255 180 100 100 }
+    , blue = { name = "blue", color = rgb255 100 150 180 }
+    , green = { name = "green", color = rgb255 100 180 100 }
+    , yellow = { name = "yellow", color = rgb255 180 180 100 }
+    , purple = { name = "purple", color = rgb255 150 100 180 }
+    , orange = { name = "orange", color = rgb255 200 120 80 }
+    , brown = { name = "brown", color = rgb255 100 60 10 }
     }
 
 
@@ -372,7 +379,10 @@ welcomeScreen : Model -> GameSettings -> Element Msg
 welcomeScreen model gameSettings =
     let
         nextColour =
-            if not <| List.member colours.yellow gameSettings.players then
+            if not <| List.member colours.green gameSettings.players then
+                colours.green
+
+            else if not <| List.member colours.yellow gameSettings.players then
                 colours.yellow
 
             else if not <| List.member colours.purple gameSettings.players then
@@ -381,12 +391,15 @@ welcomeScreen model gameSettings =
             else if not <| List.member colours.orange gameSettings.players then
                 colours.orange
 
+            else if not <| List.member colours.brown gameSettings.players then
+                colours.brown
+
             else
                 let
                     next =
                         50 + List.length gameSettings.players
                 in
-                rgb255 next next next
+                { name = "fallback", color = rgb255 next next next }
     in
     column
         [ width fill
@@ -444,7 +457,7 @@ welcomeScreen model gameSettings =
                     el
                         [ width fill
                         , height fill
-                        , Background.color colour
+                        , Background.color colour.color
                         ]
                     <|
                         Element.none
@@ -503,7 +516,7 @@ clockScreen model timer =
                         , height <| px 100
                         , Background.color
                             (if isPaused then
-                                colour
+                                colour.color
 
                              else
                                 rgba255 0 0 0 0
@@ -552,7 +565,7 @@ clockScreen model timer =
                             el
                                 [ width fill
                                 , height fill
-                                , Background.color colour
+                                , Background.color colour.color
                                 ]
                             <|
                                 if isPaused then
@@ -562,6 +575,7 @@ clockScreen model timer =
                                         , Border.color <| rgb255 180 180 180
                                         , Border.width 8
                                         , Background.tiled model.resources.stripesSvg
+                                        , htmlAttribute <| Html.Attributes.id ("player-" ++ colour.name)
                                         ]
                                     <|
                                         el [ centerX, centerY, rotation, Font.size 40 ] <|
@@ -571,9 +585,10 @@ clockScreen model timer =
                                     Input.button
                                         [ width fill
                                         , height fill
-                                        , Background.color colour
+                                        , Background.color colour.color
                                         , Border.color <| rgb255 180 180 180
                                         , Border.width 8
+                                        , htmlAttribute <| Html.Attributes.id ("player-" ++ colour.name)
                                         ]
                                         { onPress = Just Next
                                         , label =
@@ -594,9 +609,10 @@ clockScreen model timer =
                                         [ width fill
                                         , height fill
                                         , Background.color <| rgb255 100 100 100
-                                        , Border.color colour
+                                        , Border.color colour.color
                                         , Border.width 8
                                         , Font.center
+                                        , htmlAttribute <| Html.Attributes.id ("player-" ++ colour.name)
                                         ]
                                         { onPress = Just <| FirstPlayer colour
                                         , label = el [ centerX, centerY, rotation, Font.size 30 ] <| text "start"
@@ -607,8 +623,9 @@ clockScreen model timer =
                                         [ width fill
                                         , height fill
                                         , Background.color <| rgb255 100 100 100
-                                        , Border.color colour
+                                        , Border.color colour.color
                                         , Border.width 8
+                                        , htmlAttribute <| Html.Attributes.id ("player-" ++ colour.name)
                                         ]
                                     <|
                                         el [ centerX, centerY, rotation, Font.size 30 ] <|
