@@ -154,4 +154,41 @@ test.describe('Layout and Visual Tests', () => {
     // Should maintain all timer displays
     await expect(page.locator('#player-blue')).toContainText('0"'); // Some players inactive
   });
+
+  test('should arrange buttons in optimal grid layout', async ({ page }) => {
+    await page.goto('/');
+    
+    // Test 2-player layout (should be full-width buttons)
+    await page.click('text="Start"');
+    await expect(page.locator('#player-red')).toBeVisible();
+    await expect(page.locator('#player-blue')).toBeVisible();
+    
+    // Go back and test 4-player layout (should be 2x2 grid)
+    await page.goto('/');
+    await page.click('text="+ player"');
+    await page.click('text="+ player"');
+    await page.click('text="Start"');
+    
+    // All 4 players should be visible in grid layout
+    await expect(page.locator('#player-red')).toBeVisible();
+    await expect(page.locator('#player-blue')).toBeVisible();
+    await expect(page.locator('#player-green')).toBeVisible();
+    await expect(page.locator('#player-yellow')).toBeVisible();
+    
+    // Go back and test 7-player layout (should be 3x3 grid with empty spaces)
+    await page.goto('/');
+    for (let i = 0; i < 5; i++) {
+      await page.click('text="+ player"');
+    }
+    await page.click('text="Start"');
+    
+    // All 7 players should be visible
+    await expect(page.locator('#player-red')).toBeVisible();
+    await expect(page.locator('#player-blue')).toBeVisible();
+    await expect(page.locator('#player-green')).toBeVisible();
+    await expect(page.locator('#player-yellow')).toBeVisible();
+    await expect(page.locator('#player-purple')).toBeVisible();
+    await expect(page.locator('#player-orange')).toBeVisible();
+    await expect(page.locator('#player-brown')).toBeVisible();
+  });
 });
