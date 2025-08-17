@@ -440,7 +440,14 @@ welcomeScreen model gameSettings =
                     text "+ player"
                 }
             ]
-        , column
+        , let
+            ( _, columnsPerRow ) =
+                calculatePlayerLayout (List.length gameSettings.players)
+
+            playerRows =
+                groupPlayersIntoRows columnsPerRow gameSettings.players
+          in
+          column
             [ width fill
             , height fill
             , paddingEach
@@ -453,16 +460,39 @@ welcomeScreen model gameSettings =
             ]
           <|
             List.map
-                (\colour ->
-                    el
+                (\playerRow ->
+                    row
                         [ width fill
                         , height fill
-                        , Background.color colour.color
+                        , spacing 8
                         ]
                     <|
-                        Element.none
+                        List.map
+                            (\colour ->
+                                el
+                                    [ width fill
+                                    , height fill
+                                    , Background.color colour.color
+                                    ]
+                                <|
+                                    Element.none
+                            )
+                            playerRow
+                            ++ (if List.length playerRow < columnsPerRow then
+                                    -- Add empty spaces to maintain uniform layout
+                                    List.repeat (columnsPerRow - List.length playerRow)
+                                        (el
+                                            [ width fill
+                                            , height fill
+                                            ]
+                                            Element.none
+                                        )
+
+                                else
+                                    []
+                               )
                 )
-                gameSettings.players
+                playerRows
         ]
 
 
