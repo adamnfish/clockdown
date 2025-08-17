@@ -466,6 +466,59 @@ welcomeScreen model gameSettings =
         ]
 
 
+{-| Calculate optimal layout for player buttons based on player count.
+Returns (rows, columnsPerRow) where:
+
+  - 1-3 players: full width buttons (1 column per row)
+  - 4-6 players: 2 columns per row
+  - 7+ players: 3 columns per row for better space utilization
+
+-}
+calculatePlayerLayout : Int -> ( Int, Int )
+calculatePlayerLayout playerCount =
+    if playerCount <= 3 then
+        ( playerCount, 1 )
+
+    else if playerCount <= 6 then
+        let
+            rows =
+                (playerCount + 1) // 2
+        in
+        ( rows, 2 )
+
+    else
+        let
+            rows =
+                (playerCount + 2) // 3
+        in
+        ( rows, 3 )
+
+
+{-| Group players into rows based on the calculated layout
+-}
+groupPlayersIntoRows : Int -> List a -> List (List a)
+groupPlayersIntoRows columnsPerRow players =
+    if columnsPerRow == 1 then
+        List.map List.singleton players
+
+    else
+        let
+            groupHelper : List a -> List (List a) -> List (List a)
+            groupHelper remaining acc =
+                case remaining of
+                    [] ->
+                        List.reverse acc
+
+                    _ ->
+                        let
+                            ( row, rest ) =
+                                ( List.take columnsPerRow remaining, List.drop columnsPerRow remaining )
+                        in
+                        groupHelper rest (row :: acc)
+        in
+        groupHelper players []
+
+
 clockScreen : Model -> Timer -> Element Msg
 clockScreen model timer =
     let
@@ -535,104 +588,137 @@ clockScreen model timer =
                                 text "Pause"
                         }
             ]
-        , column
+        , let
+            ( _, columnsPerRow ) =
+                calculatePlayerLayout (List.length timer.players)
+
+            playerRows =
+                groupPlayersIntoRows columnsPerRow timer.players
+          in
+          column
             [ width fill
             , height fill
             , spacing 16
             ]
           <|
-            List.indexedMap
-                (\i p ->
-                    let
-                        rotation =
-                            --if modBy 2 i == 0 then
-                            --    rotate ((2 * pi) / (toFList.length timer.players))
-                            --
-                            --else
-                            rotate 0
-                    in
-                    case p of
-                        Active when acc colour ->
-                            let
-                                timeDelta =
-                                    case timer.paused of
-                                        Just pausedTime ->
-                                            (posixToMillis model.now - posixToMillis when) - (posixToMillis model.now - posixToMillis pausedTime)
-
-                                        Nothing ->
-                                            posixToMillis model.now - posixToMillis when
-                            in
-                            el
-                                [ width fill
-                                , height fill
-                                , Background.color colour.color
-                                ]
-                            <|
-                                if isPaused then
-                                    el
-                                        [ width fill
-                                        , height fill
-                                        , Border.color <| rgb255 180 180 180
-                                        , Border.width 8
-                                        , Background.tiled model.resources.stripesSvg
-                                        , htmlAttribute <| Html.Attributes.id ("player-" ++ colour.name)
-                                        ]
-                                    <|
-                                        el [ centerX, centerY, rotation, Font.size 40 ] <|
-                                            formatTime (timeDelta + acc)
+            List.map
+                (\playerRow ->
+                    row
+                        [ width fill
+                        , height fill
+                        , spacing 16
+                        ]
+                    <|
+                        List.indexedMap
+                            (\colIndex p ->
+                                renderPlayerButton model timer allPlayersThinking isPaused p
+                            )
+                            playerRow
+                            ++ (if List.length playerRow < columnsPerRow then
+                                    -- Add empty spaces to maintain uniform layout
+                                    List.repeat (columnsPerRow - List.length playerRow)
+                                        (el
+                                            [ width fill
+                                            , height fill
+                                            ]
+                                            Element.none
+                                        )
 
                                 else
-                                    Input.button
-                                        [ width fill
-                                        , height fill
-                                        , Background.color colour.color
-                                        , Border.color <| rgb255 180 180 180
-                                        , Border.width 8
-                                        , htmlAttribute <| Html.Attributes.id ("player-" ++ colour.name)
-                                        ]
-                                        { onPress = Just Next
-                                        , label =
-                                            el
-                                                [ centerX, centerY, rotation, Font.size 40 ]
-                                            <|
-                                                formatTime (timeDelta + acc)
-                                        }
-
-                        Thinking acc colour ->
-                            el
-                                [ width fill
-                                , height fill
-                                ]
-                            <|
-                                if allPlayersThinking then
-                                    Input.button
-                                        [ width fill
-                                        , height fill
-                                        , Background.color <| rgb255 100 100 100
-                                        , Border.color colour.color
-                                        , Border.width 8
-                                        , Font.center
-                                        , htmlAttribute <| Html.Attributes.id ("player-" ++ colour.name)
-                                        ]
-                                        { onPress = Just <| FirstPlayer colour
-                                        , label = el [ centerX, centerY, rotation, Font.size 30 ] <| text "start"
-                                        }
-
-                                else
-                                    el
-                                        [ width fill
-                                        , height fill
-                                        , Background.color <| rgb255 100 100 100
-                                        , Border.color colour.color
-                                        , Border.width 8
-                                        , htmlAttribute <| Html.Attributes.id ("player-" ++ colour.name)
-                                        ]
-                                    <|
-                                        el [ centerX, centerY, rotation, Font.size 30 ] <|
-                                            formatTime acc
+                                    []
+                               )
                 )
-                timer.players
+                playerRows
         ]
+
+
+{-| Render a single player button with all the necessary logic
+-}
+renderPlayerButton : Model -> Timer -> Bool -> Bool -> Player -> Element Msg
+renderPlayerButton model timer allPlayersThinking isPaused p =
+    let
+        rotation =
+            rotate 0
+    in
+    case p of
+        Active when acc colour ->
+            let
+                timeDelta =
+                    case timer.paused of
+                        Just pausedTime ->
+                            (posixToMillis model.now - posixToMillis when) - (posixToMillis model.now - posixToMillis pausedTime)
+
+                        Nothing ->
+                            posixToMillis model.now - posixToMillis when
+            in
+            el
+                [ width fill
+                , height fill
+                , Background.color colour.color
+                ]
+            <|
+                if isPaused then
+                    el
+                        [ width fill
+                        , height fill
+                        , Border.color <| rgb255 180 180 180
+                        , Border.width 8
+                        , Background.tiled model.resources.stripesSvg
+                        , htmlAttribute <| Html.Attributes.id ("player-" ++ colour.name)
+                        ]
+                    <|
+                        el [ centerX, centerY, rotation, Font.size 40 ] <|
+                            formatTime (timeDelta + acc)
+
+                else
+                    Input.button
+                        [ width fill
+                        , height fill
+                        , Background.color colour.color
+                        , Border.color <| rgb255 180 180 180
+                        , Border.width 8
+                        , htmlAttribute <| Html.Attributes.id ("player-" ++ colour.name)
+                        ]
+                        { onPress = Just Next
+                        , label =
+                            el
+                                [ centerX, centerY, rotation, Font.size 40 ]
+                            <|
+                                formatTime (timeDelta + acc)
+                        }
+
+        Thinking acc colour ->
+            el
+                [ width fill
+                , height fill
+                ]
+            <|
+                if allPlayersThinking then
+                    Input.button
+                        [ width fill
+                        , height fill
+                        , Background.color <| rgb255 100 100 100
+                        , Border.color colour.color
+                        , Border.width 8
+                        , Font.center
+                        , htmlAttribute <| Html.Attributes.id ("player-" ++ colour.name)
+                        ]
+                        { onPress = Just <| FirstPlayer colour
+                        , label = el [ centerX, centerY, rotation, Font.size 30 ] <| text "start"
+                        }
+
+                else
+                    el
+                        [ width fill
+                        , height fill
+                        , Background.color <| rgb255 100 100 100
+                        , Border.color colour.color
+                        , Border.width 8
+                        , htmlAttribute <| Html.Attributes.id ("player-" ++ colour.name)
+                        ]
+                    <|
+                        el [ centerX, centerY, rotation, Font.size 30 ] <|
+                            formatTime acc
 
 
 formatTime : Int -> Element Msg
